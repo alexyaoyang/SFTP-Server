@@ -39,43 +39,36 @@ class FTPServer {
 
 			if(splittedCommand[0].compareTo("DIR")){
 				if(splittedCommand.length == 1){
-					responseFromServer = "200 DIR COMMAND OK";
-					outToClient.writeBytes(responseFromServer);
+					outToClient.writeBytes("200 DIR COMMAND OK");
 					
-					
+					outToClient.writeBytes("200 OK");
 				}
 				else{
-					responseFromServer = "501 INVALID ARGUMENTS";
-					outToClient.writeBytes(responseFromServer);
+					outToClient.writeBytes("501 INVALID ARGUMENTS");
 				}
 			}
 			else if(splittedCommand[0].compareTo("GET")){
-				if(splittedCommand.length == 1){
-					responseFromServer = "200 GET COMMAND OK";
-					outToClient.writeBytes(responseFromServer);
+				if(splittedCommand.length == 2){
+					outToClient.writeBytes("200 GET COMMAND OK");
 					
-					
+					outToClient.writeBytes("200 OK");
 				}
 				else{
-					responseFromServer = "501 INVALID ARGUMENTS";
-					outToClient.writeBytes(responseFromServer);
+					outToClient.writeBytes("501 INVALID ARGUMENTS");
 				}
 			}
 			else if(splittedCommand[0].compareTo("PUT")){
-				if(splittedCommand.length == 1){
-					responseFromServer = "200 PUT COMMAND OK";
-					outToClient.writeBytes(responseFromServer);
+				if(splittedCommand.length >= 2){
+					outToClient.writeBytes("200 PUT COMMAND OK");
 					
-					
+					outToClient.writeBytes("200 OK");
 				}
 				else{
-					responseFromServer = "501 INVALID ARGUMENTS";
-					outToClient.writeBytes(responseFromServer);
+					outToClient.writeBytes("501 INVALID ARGUMENTS");
 				}
 			}
 			else {
-				responseFromServer = "500 UNKNOWN COMMAND";
-				outToClient.writeBytes(responseFromServer);
+				outToClient.writeBytes("500 UNKNOWN COMMAND");
 			}
 			outToClient.close();
 			inFromClient.close();

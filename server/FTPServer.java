@@ -7,14 +7,13 @@ class FTPServer {
 	{ 
 		String commandFromClient; 
 		String responseFromServer;
-		int controlport = Integer.parseInt(argv[0]);
-		int dataport = controlport + 1;
-		String ipAddress = Inet4Address.getLocalHost().getHostAddress();
-		ServerSocket welcomeSocket = new ServerSocket(controlport);
-
-		if(!argv[1].isEmpty()){
-			dataport = Integer.parseInt(argv[1]);
-		}
+		int controlPort = Integer.parseInt(argv[0]);
+		int dataPort = controlport + 1;
+		//String ipAddress = Inet4Address.getLocalHost().getHostAddress();
+		String ipAddress = "localhost";
+		
+		ServerSocket welcomeSocket = new ServerSocket(controlPort);
+		if(!argv[1].isEmpty()){ dataPort = Integer.parseInt(argv[1]); }
 
 		while(true) {
 
@@ -22,13 +21,13 @@ class FTPServer {
 			System.out.println(" accepted socket ... \n");
 
 			BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-			DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+			DataOutputStream outToClient = new DataOutputStream(new BufferedOutputStream((connectionSocket.getOutputStream()));
 
 			commandFromClient = inFromClient.readLine(); 
 			System.out.println("client command: " + commandFromClient + "\n");
 
 			if(commandFromClient.compareTo("PASV")){
-				responseFromServer = String.format("200 PORT %s %d \r\n",ipAddress,dataport);
+				responseFromServer = String.format("200 PORT %s %d \r\n",ipAddress,dataPort);
 				outToClient.writeBytes(responseFromServer);
 				commandFromClient = inFromClient.readLine();
 			}

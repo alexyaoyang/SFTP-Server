@@ -69,11 +69,7 @@ class FTPClient {
 		Socket serverDataSocket = new Socket(ipAddress, dataPort);
 		BufferedReader inFromDataSocket = new BufferedReader(new InputStreamReader(serverDataSocket.getInputStream()));
 
-		File dirList = new File(WRITEPATH+"directory_listing");
-
-		if (!dirList.exists()) {
-			dirList.createNewFile();
-		}
+		File dirList = createFile(WRITEPATH+"directory_listing");
 		
 		BufferedWriter outToFile = new BufferedWriter(new FileWriter(dirList.getAbsoluteFile()));
 		
@@ -95,10 +91,7 @@ class FTPClient {
 	
 	public void renderGET() throws IOException{
 		Socket serverDataSocket = new Socket(ipAddress, dataPort);
-		File fileToWrite = new File(WRITEPATH+fourthParam);
-		if (!fileToWrite.exists()) {
-			fileToWrite.createNewFile();
-		}
+		File fileToWrite = createFile(WRITEPATH+fourthParam);
 		BufferedInputStream inFromDataSocket = new BufferedInputStream(serverDataSocket.getInputStream());
 		BufferedOutputStream outToFile = new BufferedOutputStream(new FileOutputStream(fileToWrite));
 		
@@ -155,14 +148,19 @@ class FTPClient {
 	}
 	
 	public void writeToLogFile() throws IOException{
-		File logFile = new File("./log");
-		
-		if (!logFile.exists()) {
-			logFile.createNewFile();
-		}
+		File logFile = createFile("./log");
 		FileWriter logWriter = new FileWriter(logFile);
 		logWriter.write(logMessage);
 		
 		logWriter.close();
+	}
+	
+	public File createFile(String path) throws IOException{
+		File newFile = new File(path);
+		
+		if (!newFile.exists()) {
+			newFile.createNewFile();
+		}
+		return newFile;
 	}
 }

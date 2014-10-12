@@ -17,7 +17,6 @@ class FTPServer {
 	public BufferedReader inFromControlSocket;
 	public PrintWriter outToControlSocket;
 	public BufferedReader inFromDataSocket;
-	public PrintWriter outToDataSocket;
 	public Vector<String> dirList;
 
 	public static void main(String argv[]) throws Exception{ 
@@ -68,7 +67,7 @@ class FTPServer {
 			outToControlSocket.println("200 DIR COMMAND OK");
 
 			Socket clientConnectionDataSocket = dataSocket.accept();
-			outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
+			PrintWriter outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
 
 			dirList = new Vector<String>();
 
@@ -113,10 +112,7 @@ class FTPServer {
 
 	public void createWriteDirectory() throws IOException{
 		File writeDir = new File(WRITEPATH);
-
-		if (!writeDir.exists()) {
-			writeDir.mkdir();
-		}
+		if (!writeDir.exists()) { writeDir.mkdir(); }
 	}
 
 	public void renderGET(String[] splittedCommand) throws IOException{
@@ -129,10 +125,15 @@ class FTPServer {
 				outToControlSocket.println("200 GET COMMAND OK");
 
 				Socket clientConnectionDataSocket = dataSocket.accept();
-				outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
-
-				System.out.println("rendering get");
-
+				BufferedInputStream inFromFile = new BufferedInputStream(new FileInputStream(fileToGet));
+				BufferedOutputStream outToDataSocket = new BufferedOutputStream(clientConnectionDataSocket.getOutputStream());
+				
+				int i;
+				while ((i = inFromFile.read()) != -1) {
+					outToDataSocket.write(i);
+				}
+				
+				inFromFile.close();
 				outToDataSocket.flush();
 				outToDataSocket.close();
 				outToControlSocket.println("200 OK");

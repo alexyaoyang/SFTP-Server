@@ -1,8 +1,10 @@
 import java.io.*; 
-import java.net.*; 
-import java.util.Arrays;
+import java.net.*;
+import java.util.Collections;
+import java.util.Vector;
 
 class FTPServer {
+	public static String WRITEPATH = "./server-directory/";
 	public int controlPort;
 	public int dataPort;
 	public String ipAddress;
@@ -16,6 +18,7 @@ class FTPServer {
 	public PrintWriter outToControlSocket;
 	public BufferedReader inFromDataSocket;
 	public PrintWriter outToDataSocket;
+	public Vector<String> dirList;
 
 	public static void main(String argv[]) throws Exception{ 
 		FTPServer FS = new FTPServer();
@@ -35,66 +38,88 @@ class FTPServer {
 				outToControlSocket.println(String.format("200 PORT %s %d",ipAddress,dataPort));
 			}
 			else {
-				outToDataSocket.println("502 PASV NOT RECEIVED");
+				outToControlSocket.println("502 PASV NOT RECEIVED");
 				continue;
 			}
 
-			String[] splittedCommand = inFromDataSocket.readLine().split(" ");
+			String[] splittedCommand = inFromControlSocket.readLine().split(" ");
 
-			if(splittedCommand[0].compareTo("DIR")==0){
+			if(splittedCommand[0].equals("DIR")){
 				renderDIR(splittedCommand);
 			}
-			else if(splittedCommand[0].compareTo("GET")==0){
+			else if(splittedCommand[0].equals("GET")){
 				renderGET(splittedCommand);
 			}
-			else if(splittedCommand[0].compareTo("PUT")==0){
+			else if(splittedCommand[0].equals("PUT")){
 				renderPUT(splittedCommand);
 			}
 			else {
-				outToDataSocket.println("500 UNKNOWN COMMAND");
+				outToControlSocket.println("500 UNKNOWN COMMAND");
 			}
-			outToDataSocket.close();
-			inFromDataSocket.close();
+			dataSocket.close();
 			outToControlSocket.close();
 			inFromControlSocket.close();
 			clientConnectionControlSocket.close();
 		}
 	}
 
-	public void renderDIR(String[] splittedCommand){
+	public void renderDIR(String[] splittedCommand) throws IOException{
 		if(splittedCommand.length == 1){
 			outToControlSocket.println("200 DIR COMMAND OK");
 			
 			Socket clientConnectionDataSocket = dataSocket.accept();
 			outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
 
-			String path = new File(".").getAbsolutePath();
-			File dir = new File(path);
-			String[] listFiles = dir.list();
-
-			if(listFiles.length==0){
+			dirList = new Vector<String>();
+			
+			createWriteDirectory();
+			getDir(WRITEPATH);
+			
+			if(dirList.size()==0){
 				outToDataSocket.println("− − −the server directory is empty− − −");
 			}
 			else{
-				Arrays.sort(listFiles);
+				Collections.sort(dirList);
 
 				responseToDataSocket = "";
-				for (int i = 0; i < listFiles.length; i++) {
-					responseToDataSocket.concat(listFiles[i]+"\n");
+				for (int i = 0; i < dirList.size(); i++) {
+					responseToDataSocket += (dirList.get(i)+"\r\n");
 				}
 				outToDataSocket.println(responseToDataSocket);
+				System.out.println(responseToDataSocket);
 			}
 			outToDataSocket.flush();
 			outToDataSocket.close();
 			outToControlSocket.println("200 OK");
-			outToControlSocket.close();
 		}
 		else{
 			outToControlSocket.println("501 INVALID ARGUMENTS");
 		}
 	}
 	
-	public void renderGET(String[] splittedCommand){
+	public void getDir(String path){
+		File dir = new File(path);
+		File[] listFiles = dir.listFiles();
+		
+		if(listFiles.length==0){ dirList.add(path.replace(WRITEPATH, "")+"/"); }
+		else{
+			for(int i=0;i<listFiles.length;i++){
+				String subPath = listFiles[i].getPath();
+				if(listFiles[i].isDirectory()){ getDir(subPath); }
+				else{ dirList.add(subPath.replace(WRITEPATH, "")); }
+			}
+		}
+	}
+	
+	public void createWriteDirectory() throws IOException{
+		File writeDir = new File(WRITEPATH);
+
+		if (!writeDir.exists()) {
+			writeDir.mkdir();
+		}
+	}
+	
+	public void renderGET(String[] splittedCommand) throws IOException{
 		if(splittedCommand.length == 2){
 			outToControlSocket.println("200 GET COMMAND OK");
 
@@ -105,7 +130,7 @@ class FTPServer {
 		}
 	}
 	
-	public void renderPUT(String[] splittedCommand){
+	public void renderPUT(String[] splittedCommand) throws IOException{
 		if(splittedCommand.length >= 2){
 			outToControlSocket.println("200 PUT COMMAND OK");
 
@@ -116,7 +141,7 @@ class FTPServer {
 		}
 	}
 
-	public void setupServer(String argv[]){
+	public void setupServer(String argv[]) throws IOException{
 		try{
 			controlPort = Integer.parseInt(argv[0]);
 			ipAddress = Inet4Address.getLocalHost().getHostAddress();

@@ -67,24 +67,25 @@ class FTPServer {
 			outToControlSocket.println("200 DIR COMMAND OK");
 
 			Socket clientConnectionDataSocket = dataSocket.accept();
-			PrintWriter outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
+			DataOutputStream outToDataSocket = new DataOutputStream(clientConnectionDataSocket.getOutputStream());
 
 			dirList = new Vector<String>();
 
 			createWriteDirectory();
 			getDir(WRITEPATH);
+			
+			String lineFeed = System.getProperty("line.separator");
 
 			if(dirList.size()==0){
-				outToDataSocket.println("− − −the server directory is empty− − −");
+				outToDataSocket.write(("− − −the server directory is empty− − −"+lineFeed).getBytes());
 			}
 			else{
 				Collections.sort(dirList);
-
 				responseToDataSocket = "";
 				for (int i = 0; i < dirList.size(); i++) {
-					responseToDataSocket += (dirList.get(i)+"\r\n");
+					responseToDataSocket += dirList.get(i)+lineFeed;
 				}
-				outToDataSocket.println(responseToDataSocket);
+				outToDataSocket.write(responseToDataSocket.substring(0,responseToDataSocket.length()-1).getBytes());
 				System.out.println(responseToDataSocket);
 			}
 			outToDataSocket.flush();
@@ -155,7 +156,7 @@ class FTPServer {
 				if (!writeDir.exists()) { writeDir.mkdir(); }
 				pathToWrite += splittedCommand[2]+"/";
 			}
-			File fileToWrite = new File(pathToWrite+splittedCommand[1]);
+			File fileToWrite = new File(pathToWrite+(splittedCommand[1].substring(splittedCommand[1].lastIndexOf("/"))));
 			if (!fileToWrite.exists()) { fileToWrite.createNewFile(); }
 
 			Socket clientConnectionDataSocket = dataSocket.accept();
@@ -194,7 +195,7 @@ class FTPServer {
 	}
 
 	public ServerSocket createServerSocket(int port) throws IOException{
-		ServerSocket newSocket = new ServerSocket(port);
+		final ServerSocket newSocket = new ServerSocket(port);
 
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			public void run() {

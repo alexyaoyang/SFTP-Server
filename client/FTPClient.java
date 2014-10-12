@@ -82,11 +82,11 @@ class FTPClient {
 
 		BufferedWriter outToFile = new BufferedWriter(new FileWriter(dirList.getAbsoluteFile()));
 
-		String dirListString;
-		while((dirListString = inFromDataSocket.readLine()) != null){
-			System.out.println(dirListString);
-			outToFile.write(dirListString+"\r\n");
+		int i;
+		while ((i = inFromDataSocket.read()) != -1) {
+			outToFile.write(i);
 		}
+		
 		outToFile.flush();
 		outToFile.close();
 		String serverResponse = inFromControlSocket.readLine();

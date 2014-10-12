@@ -7,9 +7,11 @@ class FTPClient {
 	public int dataPort;
 	public String ipAddress;
 	public String command;
+	public String commandWithParam;
 	public Socket serverControlSocket;
 	public PrintWriter outToControlSocket;
 	public BufferedReader inFromControlSocket;
+	public String logMessage;
 
 	public static void main(String argv[]) throws IOException{ 
 		FTPClient FC = new FTPClient();
@@ -37,23 +39,28 @@ class FTPClient {
 			ipAddress = splitReplyString[2];
 			dataPort = Integer.parseInt(splitReplyString[3]);
 
-			outToControlSocket.println(command);
+			outToControlSocket.println(commandWithParam);
 			serverReply = inFromControlSocket.readLine();
 			if(serverReply.split(" ")[0].equals("200")){
 				if(command.equals("DIR")){
 					renderDIR();
 				}
 				else if(command.equals("GET")){
-
+					renderGET();
 				}
 				else if(command.equals("PUT")){
 
 				}
 			}
+			else {
+				System.out.println(serverReply);
+				logMessage = serverReply;
+			}
 		}
 		inFromControlSocket.close();
 		outToControlSocket.close();
 		serverControlSocket.close(); 
+		writeToLogFile();
 	}
 
 	public void renderDIR() throws IOException{
@@ -81,6 +88,22 @@ class FTPClient {
 			serverDataSocket.close();
 		}
 	}
+	
+	public void renderGET() throws IOException{
+		Socket serverDataSocket = new Socket(ipAddress, dataPort);
+		BufferedReader inFromDataSocket = new BufferedReader(new InputStreamReader(serverDataSocket.getInputStream()));
+		
+		if(inFromDataSocket.readLine().split(" ")[0].equals("401")){
+			System.out.println("401 FILE NOT FOUND");
+		}
+		
+		
+		
+		if(inFromControlSocket.readLine().split(" ")[0].equals("200")){
+			inFromDataSocket.close();
+			serverDataSocket.close();
+		}
+	}
 
 	public void createWriteDirectory() throws IOException{
 		File writeDir = new File(WRITEPATH);
@@ -91,15 +114,25 @@ class FTPClient {
 	}
 
 	public void setupClient(String argv[]) throws IOException{
-		if(argv.length<3){
-			System.out.println("Args missing");
-			System.exit(0);
-		}
 		ipAddress = argv[0];
 		controlPort = Integer.parseInt(argv[1]);
 		command = argv[2];
+		commandWithParam = "";
+		for (int i=2; i<argv.length; i++) {
+			commandWithParam += argv[i] + " ";
+		}
+	}
+	
+	public void writeToLogFile() throws IOException{
+		File logFile = new File("./log");
+		
+		if (!logFile.exists()) {
+			logFile.createNewFile();
+		}
+		
+		FileWriter logWriter = new FileWriter(logFile);
+		logWriter.write(logMessage);
+		
+		logWriter.close();
 	}
 }
-
-
-

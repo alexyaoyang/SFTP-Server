@@ -66,15 +66,15 @@ class FTPServer {
 	public void renderDIR(String[] splittedCommand) throws IOException{
 		if(splittedCommand.length == 1){
 			outToControlSocket.println("200 DIR COMMAND OK");
-			
+
 			Socket clientConnectionDataSocket = dataSocket.accept();
 			outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
 
 			dirList = new Vector<String>();
-			
+
 			createWriteDirectory();
 			getDir(WRITEPATH);
-			
+
 			if(dirList.size()==0){
 				outToDataSocket.println("− − −the server directory is empty− − −");
 			}
@@ -96,11 +96,11 @@ class FTPServer {
 			outToControlSocket.println("501 INVALID ARGUMENTS");
 		}
 	}
-	
+
 	public void getDir(String path){
 		File dir = new File(path);
 		File[] listFiles = dir.listFiles();
-		
+
 		if(listFiles.length==0){ dirList.add(path.replace(WRITEPATH, "")+"/"); }
 		else{
 			for(int i=0;i<listFiles.length;i++){
@@ -110,7 +110,7 @@ class FTPServer {
 			}
 		}
 	}
-	
+
 	public void createWriteDirectory() throws IOException{
 		File writeDir = new File(WRITEPATH);
 
@@ -118,18 +118,31 @@ class FTPServer {
 			writeDir.mkdir();
 		}
 	}
-	
+
 	public void renderGET(String[] splittedCommand) throws IOException{
 		if(splittedCommand.length == 2){
-			outToControlSocket.println("200 GET COMMAND OK");
+			File fileToGet = new File(WRITEPATH+splittedCommand[1]);
+			if(!fileToGet.exists()){
+				outToControlSocket.println("401 FILE NOT FOUND");
+			}
+			else{
+				outToControlSocket.println("200 GET COMMAND OK");
 
-			outToControlSocket.println("200 OK");
+				Socket clientConnectionDataSocket = dataSocket.accept();
+				outToDataSocket = new PrintWriter(clientConnectionDataSocket.getOutputStream(), true);
+
+				System.out.println("rendering get");
+
+				outToDataSocket.flush();
+				outToDataSocket.close();
+				outToControlSocket.println("200 OK");
+			}
 		}
 		else{
 			outToControlSocket.println("501 INVALID ARGUMENTS");
 		}
 	}
-	
+
 	public void renderPUT(String[] splittedCommand) throws IOException{
 		if(splittedCommand.length >= 2){
 			outToControlSocket.println("200 PUT COMMAND OK");

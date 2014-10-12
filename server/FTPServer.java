@@ -89,6 +89,7 @@ class FTPServer {
 			}
 			outToDataSocket.flush();
 			outToDataSocket.close();
+			clientConnectionDataSocket.close();
 			outToControlSocket.println("200 OK");
 		}
 		else{
@@ -136,6 +137,7 @@ class FTPServer {
 				inFromFile.close();
 				outToDataSocket.flush();
 				outToDataSocket.close();
+				clientConnectionDataSocket.close();
 				outToControlSocket.println("200 OK");
 			}
 		}
@@ -145,9 +147,30 @@ class FTPServer {
 	}
 
 	public void renderPUT(String[] splittedCommand) throws IOException{
-		if(splittedCommand.length >= 2){
+		if(splittedCommand.length >= 2 && splittedCommand.length<4){
 			outToControlSocket.println("200 PUT COMMAND OK");
+			String pathToWrite = WRITEPATH;
+			if(splittedCommand.length==3){
+				File writeDir = new File(WRITEPATH+splittedCommand[2]+"/");
+				if (!writeDir.exists()) { writeDir.mkdir(); }
+				pathToWrite += splittedCommand[2]+"/";
+			}
+			File fileToWrite = new File(pathToWrite+splittedCommand[1]);
+			if (!fileToWrite.exists()) { fileToWrite.createNewFile(); }
 
+			Socket clientConnectionDataSocket = dataSocket.accept();
+			BufferedInputStream inFromDataSocket = new BufferedInputStream(clientConnectionDataSocket.getInputStream());
+			BufferedOutputStream outToFile = new BufferedOutputStream(new FileOutputStream(fileToWrite));
+
+			int i;
+			while ((i = inFromDataSocket.read()) != -1) {
+				outToFile.write(i);
+			}
+			
+			inFromDataSocket.close();
+			outToFile.flush();
+			outToFile.close();
+			clientConnectionDataSocket.close();
 			outToControlSocket.println("200 OK");
 		}
 		else{

@@ -22,7 +22,16 @@ class FTPClient {
 	}
 
 	public void runClient() throws IOException{
-		// Socket clientSocket = new Socket("suna.comp.nus.edu.sg", 6789); 
+		if(command.equals("PUT")){
+			File fileToGet = new File(WRITEPATH+fourthParam);
+			if(!fileToGet.exists()){
+				System.out.println("FILE NOT FOUND");
+				logMessage = "FILE NOT FOUND";
+				writeToLogFile();
+				System.exit(0);
+			}
+		}
+
 		serverControlSocket = new Socket(ipAddress, controlPort); 
 
 		outToControlSocket = new PrintWriter(serverControlSocket.getOutputStream(), true);
@@ -70,9 +79,9 @@ class FTPClient {
 		BufferedReader inFromDataSocket = new BufferedReader(new InputStreamReader(serverDataSocket.getInputStream()));
 
 		File dirList = createFile(WRITEPATH+"directory_listing");
-		
+
 		BufferedWriter outToFile = new BufferedWriter(new FileWriter(dirList.getAbsoluteFile()));
-		
+
 		String dirListString;
 		while((dirListString = inFromDataSocket.readLine()) != null){
 			System.out.println(dirListString);
@@ -88,20 +97,20 @@ class FTPClient {
 			serverDataSocket.close();
 		}
 	}
-	
+
 	public void renderGET() throws IOException{
 		Socket serverDataSocket = new Socket(ipAddress, dataPort);
 		File fileToWrite = createFile(WRITEPATH+fourthParam.substring(fourthParam.lastIndexOf('/')));
 		BufferedInputStream inFromDataSocket = new BufferedInputStream(serverDataSocket.getInputStream());
 		BufferedOutputStream outToFile = new BufferedOutputStream(new FileOutputStream(fileToWrite));
-		
+
 		int i;
 		while ((i = inFromDataSocket.read()) != -1) {
 			outToFile.write(i);
 		}
 		outToFile.flush();
 		outToFile.close();
-		
+
 		String serverResponse = inFromControlSocket.readLine();
 		if(serverResponse.split(" ")[0].equals("200")){
 			System.out.println(serverResponse);
@@ -110,39 +119,28 @@ class FTPClient {
 			serverDataSocket.close();
 		}
 	}
-	
+
 	public void renderPUT() throws IOException{
-		Socket serverDataSocket = new Socket(ipAddress, dataPort);
-		BufferedReader inFromDataSocket = new BufferedReader(new InputStreamReader(serverDataSocket.getInputStream()));
-		
 		File fileToGet = new File(WRITEPATH+fourthParam);
-		if(!fileToGet.exists()){
-			System.out.println("FILE NOT FOUND");
-			logMessage = "FILE NOT FOUND";
+		Socket serverDataSocket = new Socket(ipAddress, dataPort);
+		BufferedInputStream inFromFile = new BufferedInputStream(new FileInputStream(fileToGet));
+		BufferedOutputStream outToDataSocket = new BufferedOutputStream(serverDataSocket.getOutputStream());
+
+		int i;
+		while ((i = inFromFile.read()) != -1) {
+			outToDataSocket.write(i);
 		}
-		else{
-			outToControlSocket.println("200 GET COMMAND OK");
-//
-//			Socket clientConnectionDataSocket = outToControlSocket.accept();
-//			BufferedInputStream inFromFile = new BufferedInputStream(new FileInputStream(fileToGet));
-//			BufferedOutputStream outToDataSocket = new BufferedOutputStream(clientConnectionDataSocket.getOutputStream());
-//			
-//			int i;
-//			while ((i = inFromFile.read()) != -1) {
-//				outToDataSocket.write(i);
-//			}
-		}
-			
-		
-		
-		
+		outToDataSocket.flush();
+		outToDataSocket.close();
+
 		String serverResponse = inFromControlSocket.readLine();
 		if(serverResponse.split(" ")[0].equals("200")){
 			System.out.println(serverResponse);
 			logMessage = serverResponse;
-			inFromDataSocket.close();
+			inFromFile.close();
 			serverDataSocket.close();
 		}
+
 	}
 
 	public void createWriteDirectory() throws IOException{
@@ -164,18 +162,18 @@ class FTPClient {
 			commandWithParam += argv[i] + " ";
 		}
 	}
-	
+
 	public void writeToLogFile() throws IOException{
 		File logFile = createFile("./log");
 		FileWriter logWriter = new FileWriter(logFile);
 		logWriter.write(logMessage);
-		
+
 		logWriter.close();
 	}
-	
+
 	public File createFile(String path) throws IOException{
 		File newFile = new File(path);
-		
+
 		if (!newFile.exists()) {
 			newFile.createNewFile();
 		}

@@ -3,6 +3,8 @@
 /tcp/
 /bin/
 /originals/
+/client/client-directory/
+/server/server-directory/
 *target*
 *.jar
 *.war

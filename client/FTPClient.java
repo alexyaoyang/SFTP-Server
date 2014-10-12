@@ -91,7 +91,7 @@ class FTPClient {
 	
 	public void renderGET() throws IOException{
 		Socket serverDataSocket = new Socket(ipAddress, dataPort);
-		File fileToWrite = createFile(WRITEPATH+fourthParam);
+		File fileToWrite = createFile(WRITEPATH+fourthParam.substring(fourthParam.lastIndexOf('/')));
 		BufferedInputStream inFromDataSocket = new BufferedInputStream(serverDataSocket.getInputStream());
 		BufferedOutputStream outToFile = new BufferedOutputStream(new FileOutputStream(fileToWrite));
 		
@@ -115,6 +115,24 @@ class FTPClient {
 		Socket serverDataSocket = new Socket(ipAddress, dataPort);
 		BufferedReader inFromDataSocket = new BufferedReader(new InputStreamReader(serverDataSocket.getInputStream()));
 		
+		File fileToGet = new File(WRITEPATH+fourthParam);
+		if(!fileToGet.exists()){
+			System.out.println("FILE NOT FOUND");
+			logMessage = "FILE NOT FOUND";
+		}
+		else{
+			outToControlSocket.println("200 GET COMMAND OK");
+//
+//			Socket clientConnectionDataSocket = outToControlSocket.accept();
+//			BufferedInputStream inFromFile = new BufferedInputStream(new FileInputStream(fileToGet));
+//			BufferedOutputStream outToDataSocket = new BufferedOutputStream(clientConnectionDataSocket.getOutputStream());
+//			
+//			int i;
+//			while ((i = inFromFile.read()) != -1) {
+//				outToDataSocket.write(i);
+//			}
+		}
+			
 		
 		
 		
